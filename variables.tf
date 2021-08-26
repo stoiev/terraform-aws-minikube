@@ -26,18 +26,8 @@ variable "aws_subnet_id" {
   description = "The subnet-id to be used for the instance"
 }
 
-variable "ssh_public_key" {
-  description = "Path to the pulic part of SSH key which should be used for the instance"
-  default     = "~/.ssh/id_rsa.pub"
-}
-
-variable "hosted_zone" {
-  description = "Hosted zone to be used for the alias"
-}
-
-variable "hosted_zone_private" {
-  description = "Is the hosted zone public or private"
-  default     = false
+variable "key_name" {
+  description = "Key which should be used for the instance"
 }
 
 variable "ami_image_id" {

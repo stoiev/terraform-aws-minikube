@@ -3,10 +3,6 @@
 # (Retrieve AWS credentials from env variables AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY)
 #####
 
-provider "aws" {
-  region = var.aws_region
-}
-
 #####
 # Generate kubeadm token
 #####
@@ -115,8 +111,6 @@ data "template_file" "init_minikube" {
 
   vars = {
     kubeadm_token = module.kubeadm-token.token
-    dns_name = "${var.cluster_name}.${var.hosted_zone}"
-    ip_address = aws_eip.minikube.public_ip
     cluster_name = var.cluster_name
     addons = join(" ", var.addons)
   }
@@ -145,15 +139,6 @@ data "template_cloudinit_config" "minikube_cloud_init" {
     content_type = "text/x-shellscript"
     content = data.template_file.init_minikube.rendered
   }
-}
-
-##########
-# Keypair
-##########
-
-resource "aws_key_pair" "minikube_keypair" {
-  key_name = var.cluster_name
-  public_key = file(var.ssh_public_key)
 }
 
 #####
@@ -190,11 +175,9 @@ resource "aws_instance" "minikube" {
 
   ami = length(var.ami_image_id) > 0 ? var.ami_image_id : data.aws_ami.centos7.id
 
-  key_name = aws_key_pair.minikube_keypair.key_name
+  key_name = var.key_name
 
   subnet_id = var.aws_subnet_id
-
-  associate_public_ip_address = false
 
   vpc_security_group_ids = [
     aws_security_group.minikube.id,
@@ -221,8 +204,7 @@ resource "aws_instance" "minikube" {
   lifecycle {
     ignore_changes = [
       ami,
-      user_data,
-      associate_public_ip_address,
+      user_data
     ]
   }
 }
@@ -236,16 +218,16 @@ resource "aws_eip_association" "minikube_assoc" {
 # DNS record
 #####
 
-data "aws_route53_zone" "dns_zone" {
-  name = "${var.hosted_zone}."
-  private_zone = var.hosted_zone_private
-}
+# data "aws_route53_zone" "dns_zone" {
+#   name = "${var.hosted_zone}."
+#   private_zone = var.hosted_zone_private
+# }
 
-resource "aws_route53_record" "minikube" {
-  zone_id = data.aws_route53_zone.dns_zone.zone_id
-  name = "${var.cluster_name}.${var.hosted_zone}"
-  type = "A"
-  records = [aws_eip.minikube.public_ip]
-  ttl = 300
-}
+# resource "aws_route53_record" "minikube" {
+#   zone_id = data.aws_route53_zone.dns_zone.zone_id
+#   name = "${var.cluster_name}.${var.hosted_zone}"
+#   type = "A"
+#   records = [aws_eip.minikube.public_ip]
+#   ttl = 300
+# }
 

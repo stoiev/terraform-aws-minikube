@@ -8,18 +8,8 @@ output "ssh_user" {
 }
 
 output "public_ip" {
-  description = "Public IP address"
-  value       = aws_eip.minikube.public_ip
-}
-
-output "dns" {
-  description = "Minikube DNS address"
-  value       = aws_route53_record.minikube.fqdn
-}
-
-output "kubeconfig_dns" {
-  description = "Path to the the kubeconfig file using DNS address"
-  value       = "/home/centos/kubeconfig"
+  description = "Public IP of kubernetes instance"
+  value       = aws_instance.minikube.public_ip
 }
 
 output "kubeconfig_ip" {

@@ -7,8 +7,6 @@ set -o errexit
 set -o pipefail
 
 export KUBEADM_TOKEN=${kubeadm_token}
-export DNS_NAME=${dns_name}
-export IP_ADDRESS=${ip_address}
 export CLUSTER_NAME=${cluster_name}
 export ADDONS="${addons}"
 export KUBERNETES_VERSION="1.21.2"
@@ -19,9 +17,7 @@ set -o nounset
 # We needed to match the hostname expected by kubeadm an the hostname used by kubelet
 LOCAL_IP_ADDRESS=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
 FULL_HOSTNAME="$(curl -s http://169.254.169.254/latest/meta-data/hostname)"
-
-# Make DNS lowercase
-DNS_NAME=$(echo "$DNS_NAME" | tr 'A-Z' 'a-z')
+IP_ADDRESS=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)
 
 ########################################
 ########################################
@@ -62,6 +58,7 @@ mkdir -p /etc/containerd
 containerd config default > /etc/containerd/config.toml
 sed -i '/^          \[plugins\."io\.containerd\.grpc\.v1\.cri"\.containerd\.runtimes\.runc\.options\]/a \            SystemdCgroup = true' /etc/containerd/config.toml
 systemctl restart containerd
+systemctl enable containerd
 
 ########################################
 ########################################
@@ -134,7 +131,6 @@ apiVersion: kubeadm.k8s.io/v1beta2
 kind: ClusterConfiguration
 apiServer:
   certSANs:
-  - $DNS_NAME
   - $IP_ADDRESS
   - $LOCAL_IP_ADDRESS
   - $FULL_HOSTNAME
@@ -196,7 +192,6 @@ chmod 0600 $KUBECONFIG_OUTPUT
 
 cp /home/centos/kubeconfig_ip /home/centos/kubeconfig
 sed -i "s/server: https:\/\/.*:6443/server: https:\/\/$IP_ADDRESS:6443/g" /home/centos/kubeconfig_ip
-sed -i "s/server: https:\/\/.*:6443/server: https:\/\/$DNS_NAME:6443/g" /home/centos/kubeconfig
 chown centos:centos /home/centos/kubeconfig
 chmod 0600 /home/centos/kubeconfig
 
