@@ -119,7 +119,6 @@ bootstrapTokens:
   - authentication
 nodeRegistration:
   kubeletExtraArgs:
-    cloud-provider: aws
     read-only-port: "10255"
     cgroup-driver: systemd
   name: $FULL_HOSTNAME
@@ -134,14 +133,9 @@ apiServer:
   - $IP_ADDRESS
   - $LOCAL_IP_ADDRESS
   - $FULL_HOSTNAME
-  extraArgs:
-    cloud-provider: aws
   timeoutForControlPlane: 5m0s
 certificatesDir: /etc/kubernetes/pki
 clusterName: kubernetes
-controllerManager:
-  extraArgs:
-    cloud-provider: aws
 dns:
   type: CoreDNS
 etcd:
